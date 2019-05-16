@@ -220,7 +220,7 @@ class beatmap:
 		if dataTaiko is not None:
 			self.starsTaiko = float(dataTaiko["difficultyrating"])
 		if dataCtb is not None:
-			self.starsCtb = float(dataCtb["difficultyrating"])
+			self.starsCtb = float(dataCtb["diff_aim"])
 		if dataMania is not None:
 			self.starsMania = float(dataMania["difficultyrating"])
 
