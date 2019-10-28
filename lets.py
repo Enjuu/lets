@@ -22,7 +22,7 @@ from common.ddog import datadogClient
 from common.log import logUtils as log
 from common.redis import pubSub
 from common.web import schiavo
-from handlers import apiCacheBeatmapHandler
+from handlers import apiCacheBeatmapHandler, rateHandler, changelogHandler
 from handlers import apiPPHandler
 from handlers import apiStatusHandler
 from handlers import banchoConnectHandler
@@ -44,6 +44,7 @@ from handlers import redirectHandler
 from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
 from handlers import commentHandler
+from handlers import lastfmHandler
 from helpers import config
 from helpers import consoleHelper
 from common import generalUtils
@@ -71,7 +72,9 @@ def make_app():
 		(r"/s/(.*)", downloadMapHandler.handler),
 		(r"/web/replays/(.*)", getFullReplayHandler.handler),
 		(r"/web/errorlogs/(.*)", getFullErrorHandler.handler),
-
+		(r"/web/lastfm.php", lastfmHandler.handler),
+		(r"/p/changelog", changelogHandler.handler),
+		(r"/web/osu-rate.php", rateHandler.handler),
 		(r"/p/verify", redirectHandler.handler, dict(destination="https://ripple.moe/index.php?p=2")),
 		(r"/u/(.*)", redirectHandler.handler, dict(destination="https://ripple.moe/index.php?u={}")),
 
@@ -85,8 +88,6 @@ def make_app():
 
 		# Not done yet
 		(r"/web/osu-addfavourite.php", osuErrorHandler.handler), # I use the error handler as I want an empty response for the time being
-		(r"/web/lastfm.php", emptyHandler.handler),
-		(r"/web/osu-rate.php", emptyHandler.handler),
 		(r"/web/osu-checktweets.php", emptyHandler.handler),
 
 		(r"/loadTest", loadTestHandler.handler),
