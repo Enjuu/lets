@@ -19,21 +19,27 @@ def getWriteReplayBucketName():
 
 def getReadReplayBucketName(scoreID):
     r = objects.glob.db.fetch(
-        "SELECT `name`, max_score_id FROM s3_replay_buckets WHERE max_score_id IS NOT NULL "
-        "ORDER BY abs(max_score_id - %s) LIMIT 1",
-        (scoreID,)
+        """SELECT name FROM (
+            SELECT `name`,
+            IFNULL((SELECT max_score_id + 1 FROM s3_replay_buckets WHERE id = x.id - 1), 0) AS min_score_id,
+            IFNULL(max_score_id, ~0) AS max_score_id
+            FROM s3_replay_buckets AS x
+        ) AS x
+        WHERE %s > min_score_id AND %s < max_score_id
+        LIMIT 1""",
+        (scoreID, scoreID)
     )
-    if r is not None and scoreID <= r["max_score_id"]:
+    if r is not None:
         log.debug("s3 replay buckets resolve: {} -> {}".format(scoreID, r["name"]))
         return r["name"]
     log.debug("s3 replay buckets resolve: {} -> WRITE BUCKET".format(scoreID))
     return getWriteReplayBucketName()
 
 
-def clientFactory():
-    return boto3.Session(region_name=objects.glob.conf["S3_REGION"]).client(
+def clientFactory(*, region, endpoint, accessKeyId, secretAccessKey):
+    return boto3.Session(region_name=region).client(
         "s3",
-        endpoint_url=objects.glob.conf["S3_ENDPOINT_URL"],
-        aws_access_key_id=objects.glob.conf["S3_ACCESS_KEY_ID"],
-        aws_secret_access_key=objects.glob.conf["S3_SECRET_ACCESS_KEY"]
+        endpoint_url=endpoint,
+        aws_access_key_id=accessKeyId,
+        aws_secret_access_key=secretAccessKey
     )
