@@ -29,6 +29,15 @@ from objects import score
 from objects import scoreboard
 from secret import butterCake
 
+def isVerifiedPlayer(userID):
+	# check if the user has a "Verified Player" badge
+	sql = "SELECT user from user_badges WHERE user = %s AND badge = (SELECT id FROM badges WHERE id = 24 AND LOWER(name) = 'verified player' LIMIT 1) LIMIT 1;"
+	# fetchAll to get all entries as a list. len > 0 means there is something
+	users = glob.db.fetchAll(sql, (userID,))
+	if len(users) > 0:
+		return True
+	return False
+
 MODULE_NAME = "submit_modular"
 class handler(requestsManager.asyncRequestHandler):
 	"""
@@ -147,10 +156,14 @@ class handler(requestsManager.asyncRequestHandler):
 				midPPCalcException = e
 
 			# Restrict obvious cheaters
+			
 			if (glob.conf.extra["lets"]["submit"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["lets"]["submit"]["max-std-pp"] and s.gameMode == gameModes.STD) and restricted == False:
-				userUtils.restrict(userID)
-				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
-				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
+				if not isVerifiedPlayer(userID):
+					userUtils.restrict(userID)
+					userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
+					log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
+				else:
+					log.warning("**{}** ({}) would have been restricted due to too high pp gain **({}pp)**, but is verified.".format(username, userID, s.pp), "cm")
 
 			# Check notepad hack
 			if bmk is None and bml is None:
